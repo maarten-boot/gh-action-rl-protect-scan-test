@@ -39,6 +39,7 @@ jobs:
           log-file: 'my-log-file.txt'
           log-level: 'pass'
           verbose: true
+          concise: true
 
       # ---------------------------------------
       - name: Run a multi-line script to show the result of the rl-protect action
