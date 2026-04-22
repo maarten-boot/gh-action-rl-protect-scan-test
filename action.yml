@@ -1,0 +1,171 @@
+name: 'gh-action-rl-protect-scan-test'
+author: 'MaartenBootTest'
+description: 'Scan package manifests using ReversingLabs rl-protect CLI'
+
+branding:
+  icon: 'shield'
+  color: 'purple'
+
+inputs:
+  scan-path:
+    description: 'Path to the package manifest or lock file'
+    type: string
+    required: true
+  scan-profile:
+    description: 'Path to a custom rl-profile or a supported keyword (minimum, baseline, hardened)'
+    type: string
+    required: false
+  # scanning options
+  check-deps:
+    description: 'CSV list of dependency types to check with Spectra Assure Community. Supported options: develop, release, optional, transitive.'
+    required: false
+    default: 'release'
+    type: string
+  transitive-depth:
+    description: 'How many levels deep to scan transitive dependencies. Applies only if check-deps includes transitive.'
+    required: false
+    default: 1
+    type: int
+  report:
+    description: 'Path and filename for exporting the scan results as an rl-protect.json report'
+    required: false
+    default: ''
+    type: string
+  # logging options
+  log-file:
+    description: 'Path to a CEF log file'
+    required: false
+    default: ""
+    type: string
+  log-label:
+    description: 'An explicit CEF log label for referencing within a SIEM'
+    required: false
+    default: ""
+    type: string
+  log-level:
+    description: 'Select the desired logging level. Supported options: pass, warn, fail.'
+    required: false
+    default: "fail"
+    type: string
+  # authentication
+  # rl-token
+  #  is passed via the ENVIRONMENT as RL_TOKEN
+  rl-server:
+    description: 'Spectra Assure Portal to connect to (e.g. https://my.secure.software/organization)'
+    type: string
+    required: false
+    default: ""
+  rl-org:
+    description: 'Spectra Assure Portal organization'
+    type: string
+    required: false
+    default: ""
+  rl-group:
+    description: 'Spectra Assure Portal group (optional)'
+    type: string
+    required: false
+    default: ""
+  # optional proxy
+  proxy-server:
+    description: 'An optional proxy server to use'
+    required: false
+    default: ""
+    type: string
+    # if proxy-server is specified then proxy-port must also be specified
+  proxy-port:
+    description: 'An optional proxy server port to use'
+    required: false
+    default: ""
+    type: string
+  proxy-user:
+    description: 'An optional proxy server user to use'
+    required: false
+    default: ""
+    type: string
+    # if proxy-user is specified then proxy-password must also be specified
+  proxy-password:
+    description: 'An optional proxy server password to use'
+    required: false
+    default: ""
+    type: string
+  ca-path:
+    description: 'An optional ca certificate path'
+    required: false
+    default: ""
+    type: string
+  # boolean options
+  concise:
+    description: 'Only report the final outcome and skip all details. Default: false'
+    required: false
+    default: false
+    type: bool
+  verbose:
+    description: 'Increase script verbosity when running the action. Default: false'
+    required: false
+    default: false
+    type: bool
+
+
+outputs:
+  description:
+    description: 'The result of the action: a string terminating in FAIL or PASS'
+    value: ${{ steps.rl-protect.outputs.description }}
+  status:
+    description: 'The single word result of the action: pass or fail'
+    value: ${{ steps.rl-protect.outputs.status }}
+
+runs:
+  using: "composite"
+
+  steps:
+    # -------------------------------------
+    # install python
+    - name: Install Python
+      uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6.2.0
+      with:
+        python-version: '3.14'
+
+    # -------------------------------------
+    # Run the run-scan.sh script
+    # RL_TOKEN is passed via the env already
+    - name: Run rl-protect using python
+      id: rl-protect
+      run: ${{ github.action_path }}/run-scan.sh
+      shell: bash
+      env:
+        SCAN_PATH: ${{ inputs.scan-path }}
+        SCAN_PROFILE: ${{ inputs.scan-profile }}
+        CHECK_DEPS: ${{ inputs.check-deps }}
+        TRANSITIVE_DEPTH: ${{ inputs.transitive-depth }}
+        REPORT: ${{ inputs.report }}
+        LOG_FILE: ${{ inputs.log-file }}
+        LOG_LEVEL: ${{ inputs.log-level }}
+        LOG_LABEL: ${{ inputs.log-label }}
+        RL_SERVER: ${{ inputs.rl-server }}
+        RL_ORG: ${{ inputs.rl-org }}
+        RL_GROUP: ${{ inputs.rl-group }}
+        PROXY_SERVER: ${{ inputs.proxy-server }}
+        PROXY_PORT: ${{ inputs.proxy-port }}
+        PROXY_USER: ${{ inputs.proxy-user }}
+        PROXY_PASSWORD: ${{ inputs.proxy-password }}
+        CA_PATH: ${{ inputs.ca-path }}
+        CONCISE: ${{ inputs.concise }}
+        VERBOSE: ${{ inputs.verbose }}
+
+    # -------------------------------------
+    # Return the proper exit status
+    - name: Set the exit status
+      if: always()
+      shell: bash
+      run: |
+        case "${{ steps.rl-protect.outputs.status }}" in
+        pass)
+          exit 0
+          ;;
+        fail)
+          exit 1
+          ;;
+        *)
+          exit 101
+          ;;
+        esac
