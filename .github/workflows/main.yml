@@ -29,9 +29,9 @@ jobs:
         env: # pass env var secrets
           RL_TOKEN: ${{ secrets.RL_TOKEN }}
         with: # pass ordinary params
-          rl-server: 'my.secure.software/myServer'
-          rl-org: 'myOrg'
-          rl-group: 'myGroup'
+          rl-server: 'my.secure.software/test'
+          rl-org: 'Test'
+          rl-group: 'Default'
           scan-path: 'requirements.txt'
           scan-profile: 'baseline'
           report: 'my-report.json'
