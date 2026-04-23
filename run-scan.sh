@@ -240,10 +240,13 @@ run_scan()
     then
         Params+=( --concise )
     fi
+    if [ "${VERBOSE}" != "true" ]
+    then
+        Params+=( --fail-only )
+    fi
 
     # ------------------------------------
     # always
-    Params+=( --fail-only )
     Params+=( --no-tracking )
     Params+=( --no-color )
     Params+=( --return-status ) # will force exit 0 on pass and exit 1 on fail/error
