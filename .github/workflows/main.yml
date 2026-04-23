@@ -24,7 +24,7 @@ jobs:
 
       # ---------------------------------------
       - name: gh-action-rl-protect-scan-test
-        uses: maarten-boot/gh-action-rl-protect-scan-test@v0.0.2
+        uses: reversinglabs/gh-action-rl-protect-scan@v1
         id: rl-protect-test
         env: # pass env var secrets
           RL_TOKEN: ${{ secrets.RL_TOKEN }}
